@@ -1,0 +1,49 @@
+version: '3.5'
+
+networks:
+  proxy-tier:
+    name: proxy-tier
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=1d'
+      - '--web.enable-lifecycle'
+    ports:
+      - 9090:9090
+    networks:
+      - proxy-tier
+    restart: always
+    volumes:
+      - prometheus_data:/prometheus
+      - ./prometheus/:/etc/prometheus/
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: test
+    ports:
+      - 3000:3000
+    networks:
+      - proxy-tier
+    restart: always
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - grafana_logs:/var/log/grafana
+      - grafana_etc:/etc/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+
+volumes:
+  grafana_data:
+    name: grafana_data
+  grafana_logs:
+    name: grafana_logs
+  grafana_etc:
+    name: grafana_etc
+  prometheus_data:
+    name: prometheus_data
